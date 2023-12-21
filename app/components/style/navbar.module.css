@@ -1,0 +1,76 @@
+.navbar_wrapper {
+  max-width: 1440px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 0 auto;
+}
+.navbar {
+  display: flex;
+  align-items: center;
+  height: 112px;
+  color: var(--contrast-text);
+  background-color: var(--dark-blue);
+}
+.navbar_logo {
+  display: flex;
+  align-items: center;
+}
+.navbar ul {
+  display: flex;
+  height: 100%;
+  list-style: none;
+}
+
+.navbar ul li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 180px;
+  height: 100%;
+  text-align: center;
+}
+
+.navbar ul li::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background-color: var(--border-color);
+}
+
+.navbar ul li:nth-child(1)::before {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.navbar ul li:nth-child(2)::before {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.navbar ul li:last-child::before {
+  height: 0;
+}
+
+.navbar ul li.active::before {
+  background-color: var(--border-active-color);
+}
+
+.navbar ul li a {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--border-color);
+}
+
+.navbar ul li.active a {
+  color: var(--contrast-text);
+}
