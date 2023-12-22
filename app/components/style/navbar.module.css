@@ -60,15 +60,22 @@
 }
 
 .navbar ul li.active::before {
-  background-color: var(--border-active-color);
+  background-color: var(--orange);
 }
 
-.navbar ul li a {
+.navbar ul li a,
+.navbar ul li button {
   display: block;
+  font-family: 'NunitoSans';
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
   color: var(--border-color);
+  cursor: pointer;
+}
+.navbar ul li button {
+  background-color: transparent;
+  border: none;
 }
 
 .navbar ul li.active a {

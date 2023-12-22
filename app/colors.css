@@ -1,6 +1,10 @@
 :root {
   --dark-blue: #181846;
+  --white: #ffffff;
+  --light-gray: #ecedf5;
+  --text: #5F6B8A;
   --contrast-text: #f9f9fd;
   --border-color: #c4c5d7;
-  --border-active-color: #ff5722;
+  --orange: #ff5722;
+  
 }
