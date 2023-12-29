@@ -18,7 +18,7 @@ body {
   overflow-x: hidden;
 }
 body {
-  font-family: "NunitoSans";
+  font-family: "NunitoSans" !important;
   font-weight: 400;
 }
 

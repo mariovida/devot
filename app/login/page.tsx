@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { getAuth, signInWithEmailAndPassword  } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import styles from "./style/login.module.css";
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = React.useState('');
+  const [errorMessage, setErrorMessage] = React.useState("");
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -20,10 +20,12 @@ const LoginPage = () => {
       router.push("/trackers");
     } catch (error: any) {
       console.log(error.message);
-      if(error.message == 'Firebase: Error (auth/invalid-email).') {
-        setErrorMessage('Invalid email address.');
-      } else if(error.message == 'Firebase: Error (auth/invalid-credential).') {
-        setErrorMessage('Invalid credentials..');
+      if (error.message == "Firebase: Error (auth/invalid-email).") {
+        setErrorMessage("Invalid email address.");
+      } else if (
+        error.message == "Firebase: Error (auth/invalid-credential)."
+      ) {
+        setErrorMessage("Invalid credentials.");
       }
     }
   };

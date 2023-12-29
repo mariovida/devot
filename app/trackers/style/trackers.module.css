@@ -1,0 +1,88 @@
+.trackers_wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  margin-top: 60px;
+}
+.trackers_wrapper h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 60px;
+}
+.tracker_buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.tracker_start,
+.tracker_stop {
+  font-family: "NunitoSans";
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+  background-color: var(--orange);
+  color: var(--white);
+  border: none;
+}
+.tracker_stop {
+  background-color: var(--dark-blue);
+}
+
+/* TABLE */
+.trackers_table table {
+  border: 1px solid var(--light-gray);
+  border-bottom: 0;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.trackers_table table thead tr th:first-child {
+  border-top-left-radius: 10px;
+}
+.trackers_table table thead tr th:last-child {
+  border-top-right-radius: 10px;
+}
+.trackers_table table thead tr th,
+.trackers_table table tbody tr td {
+  padding: 16px;
+}
+
+/* MODAL */
+.tracker_modal {
+  padding: 16px;
+  background-color: var(--white);
+}
+.tracker_modal_fields {
+  display: flex;
+  flex-direction: column;
+  margin: 16px 0;
+}
+.tracker_modal_fields label {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.tracker_modal_fields textarea {
+  font-size: 14px;
+  padding: 8px;
+}
+.tracker_modal_fields textarea:enabled:hover,
+.tracker_modal_fields textarea:enabled:focus {
+  border-color: var(--dark-blue);
+  outline: none;
+  box-shadow: none;
+}
+.tracker_modal_buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+}
+.tracker_modal_buttons button {
+  font-size: 14px;
+  padding: 5px 10px;
+  color: var(--white);
+  background-color: var(--orange);
+  border: 0;
+  border-radius: 3px;
+}
+.tracker_modal_buttons button:last-child {
+  background-color: var(--dark-blue);
+}
