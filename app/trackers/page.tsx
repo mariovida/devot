@@ -13,24 +13,28 @@ import {
   setDoc,
   doc,
   getDoc,
-  DocumentData,
+  deleteDoc,
+  getDocs,
 } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
 import styles from "./style/trackers.module.css";
 
 type Tracker = {
-  id: number;
+  id: any;
   name: string;
   startTime: string;
   description: string;
   elapsedTime: number;
   paused: boolean;
+  finished: boolean;
+  entryDate: string;
 };
 
 const TrackersPage = () => {
   const [today, setToday] = useState("");
   const [runningTrackers, setRunningTrackers] = useState<Tracker[]>([]);
   const [displayModal, setDisplayModal] = useState(false);
-  const [description, setDescription] = useState("");
+  const [trackerDescription, setDescription] = useState("");
   const [currentTracker, setCurrentTracker] = useState<Tracker | null>(null);
 
   useEffect(() => {
@@ -51,7 +55,11 @@ const TrackersPage = () => {
       const updatedTrackers = await Promise.all(
         runningTrackers.map(async (tracker) => {
           const elapsedTime = await calculateElapsedTime(tracker);
-          updateFirestoreElapsedtime(tracker.id, elapsedTime);
+          updateFirestoreElapsedtime(
+            tracker.id,
+            elapsedTime,
+            tracker.description
+          );
           return {
             ...tracker,
             elapsedTime: elapsedTime,
@@ -67,7 +75,8 @@ const TrackersPage = () => {
 
   const updateFirestoreElapsedtime = async (
     trackerId: number,
-    elapsedTime: number
+    elapsedTime: number,
+    description: string
   ) => {
     const db = getFirestore();
     const trackersCollection = collection(db, "trackers");
@@ -77,10 +86,11 @@ const TrackersPage = () => {
         doc(trackersCollection, trackerId.toString()),
         {
           elapsedTime: elapsedTime,
+          description: description,
+          entryDate: today,
         },
         { merge: true }
       );
-      console.log(`Elapsed time updated for tracker ${trackerId}`);
     } catch (error) {
       console.error(
         `Error updating elapsed time for tracker ${trackerId}`,
@@ -116,42 +126,28 @@ const TrackersPage = () => {
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const fetchFirestoreElapsedTime = async (
-    trackerId: number
-  ): Promise<number | null> => {
-    const db = getFirestore();
-    const trackersCollection = collection(db, "trackers");
-
-    try {
-      const trackerDoc = await getDoc(
-        doc(trackersCollection, trackerId.toString())
-      );
-      const trackerData = trackerDoc.data() as DocumentData;
-
-      return trackerData && trackerData.elapsedTime
-        ? trackerData.elapsedTime
-        : null;
-    } catch (error) {
-      console.error(
-        `Error fetching elapsed time for tracker ${trackerId}`,
-        error
-      );
-      return null;
-    }
-  };
-
   const startNewTimer = () => {
     setDisplayModal(true);
   };
 
   const confirmStartTracker = () => {
+    setRunningTrackers(
+      (prevTrackers) =>
+        prevTrackers.map((tracker) => ({
+          ...tracker,
+          paused: true,
+        })) as Tracker[]
+    );
+
     const newTracker = {
-      id: runningTrackers.length + 1,
+      id: uuidv4(),
       name: `Tracker ${runningTrackers.length + 1}`,
       startTime: new Date().toISOString(),
-      description: description,
+      description: trackerDescription,
       elapsedTime: 0,
       paused: false,
+      finished: false,
+      entryDate: today,
     };
 
     setCurrentTracker(newTracker);
@@ -159,78 +155,123 @@ const TrackersPage = () => {
     setDisplayModal(false);
   };
 
-  const syncDataWithFirestore = async () => {
-    const db = getFirestore();
-
-    try {
-      const trackersCollection = collection(db, "trackers");
-
-      await addDoc(trackersCollection, {
-        timestamp: serverTimestamp(),
-        runningTrackers,
-      });
-    } catch (error) {
-      console.error("Error syncing data with Firestore", error);
-    }
-  };
-
   const renderActionsColumn = (tracker: Tracker) => {
     return (
       <div>
-        {tracker.paused ? (
-          <Button
-            label="Resume"
-            onClick={() => handleAction("resume", tracker)}
-          />
-        ) : (
-          <Button
-            label="Pause"
-            onClick={() => handleAction("pause", tracker)}
-          />
+        {!tracker.finished && (
+          <>
+            {tracker.paused ? (
+              <Button
+                icon="pi pi-play"
+                rounded
+                text
+                style={{ color: "#FF5722" }}
+                onClick={() => handleAction("resume", tracker)}
+              />
+            ) : (
+              <Button
+                icon="pi pi-pause"
+                rounded
+                text
+                style={{ color: "#FF5722" }}
+                onClick={() => handleAction("pause", tracker)}
+              />
+            )}
+
+            <Button
+              icon="pi pi-stop-circle"
+              rounded
+              text
+              style={{ color: "#FF5722" }}
+              onClick={() => handleAction("stop", tracker)}
+            />
+          </>
         )}
-        <Button label="Stop" onClick={() => handleAction("stop", tracker)} />
         {/* <Button label="Edit" onClick={() => handleAction("edit", tracker)} /> */}
         <Button
-          label="Delete"
+          icon="pi pi-trash"
+          rounded
+          text
+          style={{ color: "#5F6B8A" }}
           onClick={() => handleAction("delete", tracker)}
         />
       </div>
     );
   };
 
+  const deleteTracker = async (trackerId: number) => {
+    const db = getFirestore();
+    const trackersCollection = collection(db, "trackers");
+
+    try {
+      await deleteDoc(doc(trackersCollection, trackerId.toString()));
+      console.log(`Tracker ${trackerId} deleted from Firestore`);
+    } catch (error) {
+      console.error(`Error deleting tracker ${trackerId}`, error);
+    }
+  };
+
+  const stopAll = () => {
+    setRunningTrackers((prevTrackers) =>
+      prevTrackers.map((tracker) => ({
+        ...tracker,
+        paused: true,
+        finished: true,
+      }))
+    );
+  };
+
   const handleAction = (action: string, tracker: Tracker) => {
     if (action === "delete") {
       setRunningTrackers((prevTrackers) =>
-        prevTrackers.filter((tracker) => tracker.id !== tracker.id)
+        prevTrackers.filter((t) => t.id !== tracker.id)
       );
+      deleteTracker(tracker.id);
     }
 
     if (action === "pause") {
       setRunningTrackers((prevTrackers) =>
-        prevTrackers.map((tracker) =>
-          tracker.id === tracker.id
+        prevTrackers.map((t) =>
+          t.id === tracker.id
             ? {
-                ...tracker,
+                ...t,
                 paused: true,
               }
-            : tracker
+            : t
         )
       );
     }
 
     if (action === "resume") {
       setRunningTrackers((prevTrackers) =>
-        prevTrackers.map((tracker) =>
-          tracker.id === tracker.id
+        prevTrackers.map((t) =>
+          t.id === tracker.id
             ? {
-                ...tracker,
+                ...t,
                 paused: false,
               }
-            : tracker
+            : {
+                ...t,
+                paused: true,
+              }
         )
       );
 
       updateFirestoreResume(tracker.id);
+    }
+
+    if (action === "stop") {
+      setRunningTrackers((prevTrackers) =>
+        prevTrackers.map((t) =>
+          t.id === tracker.id
+            ? {
+                ...t,
+                paused: true,
+                finished: true,
+              }
+            : t
+        )
+      );
     }
   };
 
@@ -246,7 +287,6 @@ const TrackersPage = () => {
         },
         { merge: true }
       );
-      console.log(`Tracker ${trackerId} resumed in Firestore`);
     } catch (error) {
       console.error(
         `Error updating resume status for tracker ${trackerId}`,
@@ -267,16 +307,21 @@ const TrackersPage = () => {
         />
         <Button
           label="Stop all"
-          onClick={startNewTimer}
+          onClick={stopAll}
           className={styles.tracker_stop}
         />
       </div>
 
       {runningTrackers.length > 0 ? (
-        <DataTable value={runningTrackers} className={styles.trackers_table}>
+        <DataTable
+          value={runningTrackers}
+          className={styles.trackers_table}
+          paginator
+          rows={3}
+        >
           <Column
             field="startTime"
-            header="Time Logged"
+            header="Time logged"
             body={(tracker) => formatElapsedTime(tracker)}
           ></Column>
           <Column
@@ -288,7 +333,11 @@ const TrackersPage = () => {
           <Column body={renderActionsColumn} header="Actions"></Column>
         </DataTable>
       ) : (
-        <p>No trackers currently running.</p>
+        <DataTable value={runningTrackers} className={styles.trackers_table}>
+          <Column field="startTime" header="Time Logged"></Column>
+          <Column field="description" header="Description"></Column>
+          <Column header="Actions"></Column>
+        </DataTable>
       )}
 
       <Dialog
@@ -303,7 +352,7 @@ const TrackersPage = () => {
             <label>Description:</label>
             <InputTextarea
               autoResize
-              value={description}
+              value={trackerDescription}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
             />
