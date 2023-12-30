@@ -9,6 +9,26 @@
   margin-bottom: 60px;
 }
 
+.date_filters {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 24px 40px;
+  margin-bottom: 30px;
+  background-color: var(--contrast-text);
+}
+.date_filters div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.date_filters div span button {
+  display: none;
+}
+.date_filters button {
+  width: 180px;
+}
+
 /* TABLE */
 .history_table table {
   border-collapse: collapse;
