@@ -15,7 +15,10 @@ import {
   getDoc,
   deleteDoc,
   getDocs,
+  query,
+  where,
 } from "firebase/firestore";
+import firebase from "firebase/app";
 import { v4 as uuidv4 } from "uuid";
 import styles from "./style/trackers.module.css";
 
@@ -27,7 +30,7 @@ type Tracker = {
   elapsedTime: number;
   paused: boolean;
   finished: boolean;
-  entryDate: string;
+  entryDate: Date;
 };
 
 const TrackersPage = () => {
@@ -49,6 +52,34 @@ const TrackersPage = () => {
 
     setToday(getFormattedDate());
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const trackers = await fetchRunningTrackers();
+        setRunningTrackers(trackers);
+      } catch (error) {
+        console.error("Error fetching running trackers:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const fetchRunningTrackers = async () => {
+    const db = getFirestore();
+    const trackersCollection = collection(db, "trackers");
+
+    const q = query(trackersCollection, where("finished", "==", false));
+    const querySnapshot = await getDocs(q);
+
+    const runningTrackers: Tracker[] = [];
+    querySnapshot.forEach((doc) => {
+      runningTrackers.push(doc.data() as Tracker);
+    });
+
+    return runningTrackers;
+  };
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -87,7 +118,7 @@ const TrackersPage = () => {
         {
           elapsedTime: elapsedTime,
           description: description,
-          entryDate: today,
+          entryDate: serverTimestamp(),
         },
         { merge: true }
       );
@@ -128,6 +159,7 @@ const TrackersPage = () => {
 
   const startNewTimer = () => {
     setDisplayModal(true);
+    setDescription("");
   };
 
   const confirmStartTracker = () => {
@@ -147,7 +179,7 @@ const TrackersPage = () => {
       elapsedTime: 0,
       paused: false,
       finished: false,
-      entryDate: today,
+      entryDate: new Date(),
     };
 
     setCurrentTracker(newTracker);
@@ -187,7 +219,13 @@ const TrackersPage = () => {
             />
           </>
         )}
-        {/* <Button label="Edit" onClick={() => handleAction("edit", tracker)} /> */}
+        <Button
+          icon="pi pi-pencil"
+          rounded
+          text
+          style={{ color: "#5F6B8A" }}
+          onClick={() => handleAction("edit", tracker)}
+        />
         <Button
           icon="pi pi-trash"
           rounded

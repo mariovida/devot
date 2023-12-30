@@ -1,0 +1,35 @@
+.history_wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  margin-top: 60px;
+}
+.history_wrapper h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 60px;
+}
+
+/* TABLE */
+.history_table table {
+  border-collapse: collapse;
+}
+.history_table tr th:first-child {
+  width: 250px;
+}
+.history_table tr th:last-child {
+  width: 250px;
+}
+.history_table td,
+.history_table th {
+  border: 1px solid var(--light-gray);
+  padding: 16px;
+}
+.history_table button {
+  height: 26px;
+  width: 21px;
+  margin-right: 16px;
+}
+.history_table button:enabled:focus {
+  outline: none;
+  box-shadow: none;
+}

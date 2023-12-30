@@ -44,8 +44,8 @@
   padding: 16px;
 }
 .trackers_table button {
-  height: 20px;
-  width: 20px;
+  height: 26px;
+  width: 21px;
   margin-right: 16px;
 }
 .trackers_table button:enabled:focus {
