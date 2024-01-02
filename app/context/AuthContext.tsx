@@ -1,14 +1,20 @@
 "use client";
-import { useContext, createContext, useState, useEffect, ReactNode } from "react";
 import {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    User,
-    updateProfile,
-  } from "firebase/auth";
+  useContext,
+  createContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User,
+  updateProfile,
+} from "firebase/auth";
 import { auth } from "@/firebase/config";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -16,7 +22,11 @@ interface AuthContextProps {
   loading: boolean;
   user: any;
   signInWithEmailPassword: (email: string, password: string) => Promise<void>;
-  signUpWithEmailPassword: (email: string, password: string, username: string) => Promise<void>;
+  signUpWithEmailPassword: (
+    email: string,
+    password: string,
+    username: string
+  ) => Promise<void>;
   logOut: () => void;
 }
 
@@ -45,10 +55,10 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!loading && !user && pathname !== '/register') {
+      if (!loading && !user && pathname !== "/register") {
         router.push("/login");
       }
-      if (!loading && user && pathname === '/login') {
+      if (!loading && user && (pathname === "/login" || pathname === "/")) {
         router.push("/trackers");
       }
     });
@@ -56,17 +66,21 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({
     return () => unsubscribe();
   }, [loading, pathname, router]);
 
-    const signInWithEmailPassword = async (email: string, password: string) => {
-        await signInWithEmailAndPassword(auth, email, password);
-    };
+  const signInWithEmailPassword = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
 
-    const signUpWithEmailPassword = async (email: string, password: string, username: string) => {
-      await createUserWithEmailAndPassword(auth, email, password);
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await updateProfile(currentUser, { displayName: username });
-      }
-    };
+  const signUpWithEmailPassword = async (
+    email: string,
+    password: string,
+    username: string
+  ) => {
+    await createUserWithEmailAndPassword(auth, email, password);
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await updateProfile(currentUser, { displayName: username });
+    }
+  };
 
   const logOut = () => {
     signOut(auth);
@@ -82,7 +96,13 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, signInWithEmailPassword, signUpWithEmailPassword, logOut, loading }}
+      value={{
+        user,
+        signInWithEmailPassword,
+        signUpWithEmailPassword,
+        logOut,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>

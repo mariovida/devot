@@ -6,7 +6,7 @@ import { AuthContextProvider } from "./context/AuthContext";
 import { TimerProvider } from "./TimerContext";
 
 export const metadata = {
-  title: "Devōt",
+  title: "Devōt | TimeTracker",
   description: "Time tracking software",
 };
 
