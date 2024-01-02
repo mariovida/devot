@@ -1,6 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./style/register.module.css";
@@ -36,7 +40,10 @@ const RegisterPage = () => {
 
   return (
     <div className={styles.register_box}>
-      <form onSubmit={(e) => e.preventDefault()} className={styles.register_form}>
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className={styles.register_form}
+      >
         <h3>Sign Up</h3>
         <input
           type="email"
@@ -63,7 +70,8 @@ const RegisterPage = () => {
           placeholder="Password"
           onChange={(e) => setPassword(e.target.value)}
           className={styles.register_form_input}
-          required />
+          required
+        />
         <input
           type="password"
           id="confirmPassword"
@@ -71,8 +79,13 @@ const RegisterPage = () => {
           placeholder="Confirm password"
           onChange={(e) => setConfirmPassword(e.target.value)}
           className={styles.register_form_input}
-          required />
-        <button type="button" onClick={handleRegister} className={styles.register_form_submit}>
+          required
+        />
+        <button
+          type="button"
+          onClick={handleRegister}
+          className={styles.register_form_submit}
+        >
           Register
         </button>
       </form>

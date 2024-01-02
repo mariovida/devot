@@ -21,11 +21,11 @@ export default function RootLayout({
         <link rel="icon" href="favicon.svg" />
       </head>
       <body>
-      <AuthContextProvider>
-      <TimerProvider>
-        <Navbar />
-        {children}
-        </TimerProvider>
+        <AuthContextProvider>
+          <TimerProvider>
+            <Navbar />
+            {children}
+          </TimerProvider>
         </AuthContextProvider>
       </body>
     </html>
