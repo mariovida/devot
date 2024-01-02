@@ -13,6 +13,8 @@
   height: 112px;
   color: var(--contrast-text);
   background-color: var(--dark-blue);
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
 }
 .navbar_logo {
   display: flex;

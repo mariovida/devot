@@ -17,21 +17,12 @@ import {
   getDocs,
   query,
   where,
+  updateDoc,
 } from "firebase/firestore";
-import firebase from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { Tracker } from "./../types";
 import { v4 as uuidv4 } from "uuid";
 import styles from "./style/trackers.module.css";
-
-type Tracker = {
-  id: any;
-  name: string;
-  startTime: string;
-  description: string;
-  elapsedTime: number;
-  paused: boolean;
-  finished: boolean;
-  entryDate: Date;
-};
 
 const TrackersPage = () => {
   const [today, setToday] = useState("");
@@ -39,6 +30,16 @@ const TrackersPage = () => {
   const [displayModal, setDisplayModal] = useState(false);
   const [trackerDescription, setDescription] = useState("");
   const [currentTracker, setCurrentTracker] = useState<Tracker | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editedDescription, setEditedDescription] = useState("");
+  const [selectedTracker, setSelectedTracker] = useState<Tracker | null>(null);
+
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+  let currentUserId: string;
+  if (currentUser) {
+    currentUserId = currentUser.uid;
+  }
 
   useEffect(() => {
     const getFormattedDate = () => {
@@ -56,8 +57,8 @@ const TrackersPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const trackers = await fetchRunningTrackers();
-        setRunningTrackers(trackers);
+        const storedTrackers = JSON.parse(localStorage.getItem("runningTrackers") || "[]");
+        setRunningTrackers(storedTrackers);
       } catch (error) {
         console.error("Error fetching running trackers:", error);
       }
@@ -86,11 +87,7 @@ const TrackersPage = () => {
       const updatedTrackers = await Promise.all(
         runningTrackers.map(async (tracker) => {
           const elapsedTime = await calculateElapsedTime(tracker);
-          updateFirestoreElapsedtime(
-            tracker.id,
-            elapsedTime,
-            tracker.description
-          );
+          updateLocalStorageElapsedtime(tracker.id, elapsedTime, tracker.description);
           return {
             ...tracker,
             elapsedTime: elapsedTime,
@@ -98,11 +95,60 @@ const TrackersPage = () => {
         })
       );
 
+      if (shouldSaveToFirestore()) {
+        await saveEntriesToFirestore();
+      }
+  
       setRunningTrackers(updatedTrackers);
     }, 1000);
 
     return () => clearInterval(interval);
   }, [runningTrackers]);
+
+  const shouldSaveToFirestore = () => {
+    return true;
+  };
+  
+  const saveEntriesToFirestore = async () => {
+    const db = getFirestore();
+    const trackersCollection = collection(db, "trackers");
+  
+    try {
+      await Promise.all(
+        runningTrackers.map(async (tracker) => {
+          const { id, elapsedTime, description, entryDate, userId } = tracker;
+          await setDoc(
+            doc(trackersCollection, id.toString()),
+            {
+              elapsedTime,
+              description,
+              entryDate,
+              userId,
+
+            },
+            { merge: true }
+          );
+        })
+      );
+  
+      localStorage.setItem("lastSaveTime", new Date().toISOString());
+    } catch (error) {
+      console.error("Error saving entries to Firestore:", error);
+    }
+  };
+
+  const updateLocalStorageElapsedtime = (trackerId: any, elapsedTime: number, description: string) => {
+    const updatedTrackers = runningTrackers.map((tracker) =>
+      tracker.id === trackerId
+        ? {
+            ...tracker,
+            elapsedTime: elapsedTime,
+          }
+        : tracker
+    );
+
+    localStorage.setItem("runningTrackers", JSON.stringify(updatedTrackers));
+  };
 
   const updateFirestoreElapsedtime = async (
     trackerId: number,
@@ -118,7 +164,7 @@ const TrackersPage = () => {
         {
           elapsedTime: elapsedTime,
           description: description,
-          entryDate: serverTimestamp(),
+          entryDate: today,
         },
         { merge: true }
       );
@@ -173,18 +219,59 @@ const TrackersPage = () => {
 
     const newTracker = {
       id: uuidv4(),
+      userId: currentUserId,
       name: `Tracker ${runningTrackers.length + 1}`,
       startTime: new Date().toISOString(),
       description: trackerDescription,
       elapsedTime: 0,
       paused: false,
       finished: false,
-      entryDate: new Date(),
+      entryDate: today,
     };
 
     setCurrentTracker(newTracker);
-    setRunningTrackers((prevTrackers) => [...prevTrackers, newTracker]);
-    setDisplayModal(false);
+  setRunningTrackers((prevTrackers) => {
+    const updatedTrackers = [...prevTrackers, newTracker];
+    updateLocalStorageTrackers(updatedTrackers);
+    return updatedTrackers;
+  });
+  setDisplayModal(false);
+  };
+
+  const updateLocalStorageTrackers = (updatedTrackers: Tracker[]) => {
+    localStorage.setItem("runningTrackers", JSON.stringify(updatedTrackers));
+  };
+
+  const handleEditDescription = (tracker: Tracker) => {
+    setSelectedTracker(tracker);
+    setEditedDescription(tracker.description);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveDescription = async () => {
+    try {
+      if (selectedTracker) {
+        const updatedTrackers = runningTrackers.map((tracker) =>
+          tracker.id === selectedTracker.id
+            ? {
+                ...tracker,
+                description: editedDescription,
+              }
+            : tracker
+        );
+  
+        setRunningTrackers(updatedTrackers);
+        updateLocalStorageTrackers(updatedTrackers);
+  
+        const db = getFirestore();
+        const trackerDocRef = doc(db, "trackers", selectedTracker.id);
+        await updateDoc(trackerDocRef, { description: editedDescription });
+  
+        setIsEditModalOpen(false);
+      }
+    } catch (error) {
+      console.error("Error saving description:", error);
+    }
   };
 
   const renderActionsColumn = (tracker: Tracker) => {
@@ -220,12 +307,12 @@ const TrackersPage = () => {
           </>
         )}
         <Button
-          icon="pi pi-pencil"
-          rounded
-          text
-          style={{ color: "#5F6B8A" }}
-          onClick={() => handleAction("edit", tracker)}
-        />
+                  icon="pi pi-pencil"
+                  rounded
+                  text
+                  style={{ color: "#5F6B8A" }}
+                  onClick={() => handleEditDescription(tracker)}
+                />
         <Button
           icon="pi pi-trash"
           rounded
@@ -237,13 +324,18 @@ const TrackersPage = () => {
     );
   };
 
+  const removeTrackerFromLocalStorage = (trackerId: any) => {
+    const updatedTrackers = runningTrackers.filter((tracker) => tracker.id !== trackerId);
+    localStorage.setItem("runningTrackers", JSON.stringify(updatedTrackers));
+  };
+
   const deleteTracker = async (trackerId: number) => {
     const db = getFirestore();
     const trackersCollection = collection(db, "trackers");
 
     try {
       await deleteDoc(doc(trackersCollection, trackerId.toString()));
-      console.log(`Tracker ${trackerId} deleted from Firestore`);
+      removeTrackerFromLocalStorage(trackerId);
     } catch (error) {
       console.error(`Error deleting tracker ${trackerId}`, error);
     }
@@ -316,12 +408,15 @@ const TrackersPage = () => {
   const updateFirestoreResume = async (trackerId: number) => {
     const db = getFirestore();
     const trackersCollection = collection(db, "trackers");
-
+  
     try {
       await setDoc(
         doc(trackersCollection, trackerId.toString()),
         {
           paused: false,
+          finished: true,
+          entryDate: today,
+          userId: currentUserId,
         },
         { merge: true }
       );
@@ -398,6 +493,30 @@ const TrackersPage = () => {
           <div className={styles.tracker_modal_buttons}>
             <Button label="Confirm" onClick={confirmStartTracker} />
             <Button label="Cancel" onClick={() => setDisplayModal(false)} />
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        header="Edit Description"
+        visible={isEditModalOpen}
+        style={{ width: "500px" }}
+        className={styles.tracker_modal}
+        onHide={() => setIsEditModalOpen(false)}
+      >
+        <div className={styles.tracker_modal_content}>
+          <div className={styles.tracker_modal_fields}>
+            <label>Description:</label>
+            <InputTextarea
+              autoResize
+              value={editedDescription}
+              onChange={(e) => setEditedDescription(e.target.value)}
+              rows={5}
+            />
+          </div>
+          <div className={styles.tracker_modal_buttons}>
+            <Button label="Save" onClick={handleSaveDescription} />
+            <Button label="Cancel" onClick={() => setIsEditModalOpen(false)} />
           </div>
         </div>
       </Dialog>

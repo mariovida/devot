@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import "./globals.css";
 import { AuthContextProvider } from "./context/AuthContext";
+import { TimerProvider } from "./TimerContext";
 
 export const metadata = {
   title: "Devōt",
@@ -21,8 +22,10 @@ export default function RootLayout({
       </head>
       <body>
       <AuthContextProvider>
+      <TimerProvider>
         <Navbar />
         {children}
+        </TimerProvider>
         </AuthContextProvider>
       </body>
     </html>
