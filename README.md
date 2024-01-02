@@ -32,3 +32,9 @@ The TimeTracker App is a web application developed using Next.js, providing a so
    - Start the application: `npm run dev`
 
 2. Access the application in your web browser (http://localhost:3000).
+
+## Access Information
+
+- **Email:** devot@test.com
+
+- **Password:** devot123
