@@ -58,7 +58,11 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({
       if (!loading && !user && pathname !== "/register") {
         router.push("/login");
       }
-      if (!loading && user && (pathname === "/login" || pathname === "/")) {
+      if (
+        !loading &&
+        user &&
+        (pathname === "/login" || pathname === "/register" || pathname === "/")
+      ) {
         router.push("/trackers");
       }
     });

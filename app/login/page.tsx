@@ -19,7 +19,6 @@ const LoginPage = () => {
       await signInWithEmailAndPassword(auth, username, password);
       router.push("/trackers");
     } catch (error: any) {
-      console.log(error.message);
       if (error.message == "Firebase: Error (auth/invalid-email).") {
         setErrorMessage("Invalid email address.");
       } else if (

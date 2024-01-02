@@ -14,12 +14,15 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [errorMessage, setErrorMessage] = React.useState("");
   const router = useRouter();
 
   const handleRegister = async () => {
     const auth = getAuth();
 
     try {
+      setErrorMessage("");
+
       if (password !== confirmPassword) {
         throw new Error("Passwords do not match");
       }
@@ -33,8 +36,19 @@ const RegisterPage = () => {
       const user = userCredential.user;
       await updateProfile(user, { displayName: username });
       router.push("/login");
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      if (error.message == "Firebase: Error (auth/invalid-email).") {
+        setErrorMessage("Invalid email address.");
+      } else if (error.message == "Firebase: Error (auth/missing-password).") {
+        setErrorMessage("Enter password.");
+      } else if (error.message == "Passwords do not match") {
+        setErrorMessage("Passwords don't match.");
+      } else if (
+        error.message ==
+        "Firebase: Password should be at least 6 characters (auth/weak-password)."
+      ) {
+        setErrorMessage("Password should be at least 6 characters long.");
+      }
     }
   };
 
@@ -88,6 +102,7 @@ const RegisterPage = () => {
         >
           Register
         </button>
+        {errorMessage && <p className={styles.error_message}>{errorMessage}</p>}
       </form>
       <div className={styles.register_register}>
         <p>Already have an account?</p>
