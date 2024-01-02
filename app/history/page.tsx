@@ -86,7 +86,13 @@ const HistoryPage = () => {
   };
 
   useEffect(() => {
-    handleFilterClick();
+    const timerId = setTimeout(() => {
+      handleFilterClick();
+    }, 400);
+
+    return () => {
+      clearTimeout(timerId);
+    };
   }, []);
 
   const handleDelete = async (timer: Timer) => {
