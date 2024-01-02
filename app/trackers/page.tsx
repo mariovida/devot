@@ -57,7 +57,9 @@ const TrackersPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const storedTrackers = JSON.parse(localStorage.getItem("runningTrackers") || "[]");
+        const storedTrackers = JSON.parse(
+          localStorage.getItem("runningTrackers") || "[]"
+        );
         setRunningTrackers(storedTrackers);
       } catch (error) {
         console.error("Error fetching running trackers:", error);
@@ -87,7 +89,11 @@ const TrackersPage = () => {
       const updatedTrackers = await Promise.all(
         runningTrackers.map(async (tracker) => {
           const elapsedTime = await calculateElapsedTime(tracker);
-          updateLocalStorageElapsedtime(tracker.id, elapsedTime, tracker.description);
+          updateLocalStorageElapsedtime(
+            tracker.id,
+            elapsedTime,
+            tracker.description
+          );
           return {
             ...tracker,
             elapsedTime: elapsedTime,
@@ -98,7 +104,7 @@ const TrackersPage = () => {
       if (shouldSaveToFirestore()) {
         await saveEntriesToFirestore();
       }
-  
+
       setRunningTrackers(updatedTrackers);
     }, 1000);
 
@@ -108,11 +114,11 @@ const TrackersPage = () => {
   const shouldSaveToFirestore = () => {
     return true;
   };
-  
+
   const saveEntriesToFirestore = async () => {
     const db = getFirestore();
     const trackersCollection = collection(db, "trackers");
-  
+
     try {
       await Promise.all(
         runningTrackers.map(async (tracker) => {
@@ -124,20 +130,23 @@ const TrackersPage = () => {
               description,
               entryDate,
               userId,
-
             },
             { merge: true }
           );
         })
       );
-  
+
       localStorage.setItem("lastSaveTime", new Date().toISOString());
     } catch (error) {
       console.error("Error saving entries to Firestore:", error);
     }
   };
 
-  const updateLocalStorageElapsedtime = (trackerId: any, elapsedTime: number, description: string) => {
+  const updateLocalStorageElapsedtime = (
+    trackerId: any,
+    elapsedTime: number,
+    description: string
+  ) => {
     const updatedTrackers = runningTrackers.map((tracker) =>
       tracker.id === trackerId
         ? {
@@ -150,36 +159,7 @@ const TrackersPage = () => {
     localStorage.setItem("runningTrackers", JSON.stringify(updatedTrackers));
   };
 
-  const updateFirestoreElapsedtime = async (
-    trackerId: number,
-    elapsedTime: number,
-    description: string
-  ) => {
-    const db = getFirestore();
-    const trackersCollection = collection(db, "trackers");
-
-    try {
-      await setDoc(
-        doc(trackersCollection, trackerId.toString()),
-        {
-          elapsedTime: elapsedTime,
-          description: description,
-          entryDate: today,
-        },
-        { merge: true }
-      );
-    } catch (error) {
-      console.error(
-        `Error updating elapsed time for tracker ${trackerId}`,
-        error
-      );
-    }
-  };
-
   const calculateElapsedTime = async (tracker: Tracker) => {
-    const currentTime = new Date();
-    const startTimeObj = new Date(tracker.startTime);
-
     let elapsedTime;
 
     if (tracker.paused) {
@@ -230,12 +210,12 @@ const TrackersPage = () => {
     };
 
     setCurrentTracker(newTracker);
-  setRunningTrackers((prevTrackers) => {
-    const updatedTrackers = [...prevTrackers, newTracker];
-    updateLocalStorageTrackers(updatedTrackers);
-    return updatedTrackers;
-  });
-  setDisplayModal(false);
+    setRunningTrackers((prevTrackers) => {
+      const updatedTrackers = [...prevTrackers, newTracker];
+      updateLocalStorageTrackers(updatedTrackers);
+      return updatedTrackers;
+    });
+    setDisplayModal(false);
   };
 
   const updateLocalStorageTrackers = (updatedTrackers: Tracker[]) => {
@@ -259,14 +239,14 @@ const TrackersPage = () => {
               }
             : tracker
         );
-  
+
         setRunningTrackers(updatedTrackers);
         updateLocalStorageTrackers(updatedTrackers);
-  
+
         const db = getFirestore();
         const trackerDocRef = doc(db, "trackers", selectedTracker.id);
         await updateDoc(trackerDocRef, { description: editedDescription });
-  
+
         setIsEditModalOpen(false);
       }
     } catch (error) {
@@ -307,12 +287,12 @@ const TrackersPage = () => {
           </>
         )}
         <Button
-                  icon="pi pi-pencil"
-                  rounded
-                  text
-                  style={{ color: "#5F6B8A" }}
-                  onClick={() => handleEditDescription(tracker)}
-                />
+          icon="pi pi-pencil"
+          rounded
+          text
+          style={{ color: "#5F6B8A" }}
+          onClick={() => handleEditDescription(tracker)}
+        />
         <Button
           icon="pi pi-trash"
           rounded
@@ -325,7 +305,9 @@ const TrackersPage = () => {
   };
 
   const removeTrackerFromLocalStorage = (trackerId: any) => {
-    const updatedTrackers = runningTrackers.filter((tracker) => tracker.id !== trackerId);
+    const updatedTrackers = runningTrackers.filter(
+      (tracker) => tracker.id !== trackerId
+    );
     localStorage.setItem("runningTrackers", JSON.stringify(updatedTrackers));
   };
 
@@ -408,7 +390,7 @@ const TrackersPage = () => {
   const updateFirestoreResume = async (trackerId: number) => {
     const db = getFirestore();
     const trackersCollection = collection(db, "trackers");
-  
+
     try {
       await setDoc(
         doc(trackersCollection, trackerId.toString()),
