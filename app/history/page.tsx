@@ -15,6 +15,7 @@ import {
   getDocs,
   updateDoc,
   doc,
+  deleteDoc,
 } from "firebase/firestore";
 import styles from "./style/history.module.css";
 import { getAuth } from "firebase/auth";
@@ -45,17 +46,17 @@ const HistoryPage = () => {
   const fetchPreviousTimers = async () => {
     const db = getFirestore();
     const trackersCollection = collection(db, "trackers");
-  
+
     let q = query(trackersCollection, orderBy("entryDate", "desc"));
-  
+
     if (startDate) {
       q = query(q, where("entryDate", ">=", getFormattedDate(startDate)));
     }
-  
+
     if (endDate) {
       q = query(q, where("entryDate", "<=", getFormattedDate(endDate)));
     }
-    
+
     const auth = getAuth();
     const currentUser = auth.currentUser;
     if (currentUser) {
@@ -66,15 +67,14 @@ const HistoryPage = () => {
     }
 
     const querySnapshot = await getDocs(q);
-  
+
     const previousTimers: Timer[] = [];
     querySnapshot.forEach((doc) => {
       previousTimers.push({ docId: doc.id, ...doc.data() } as Timer);
     });
-  
+
     return previousTimers;
   };
-  
 
   const handleFilterClick = async () => {
     try {
@@ -89,8 +89,15 @@ const HistoryPage = () => {
     handleFilterClick();
   }, []);
 
-  const handleDelete = (timer: Timer) => {
-    console.log('Deleting entry with ID:', timer.docId);
+  const handleDelete = async (timer: Timer) => {
+    try {
+      const db = getFirestore();
+      const timerDocRef = doc(db, "trackers", timer.docId);
+      await deleteDoc(timerDocRef);
+      handleFilterClick();
+    } catch (error) {
+      console.error("Error deleting entry:", error);
+    }
   };
 
   const handleEdit = (timer: Timer) => {
@@ -174,32 +181,34 @@ const HistoryPage = () => {
             body={(timer) => (
               <>
                 <Button
-                icon="pi pi-trash"
-                rounded
-                text
-                style={{ color: "#5F6B8A" }}
-                onClick={() => handleDelete(timer)} />
+                  icon="pi pi-trash"
+                  rounded
+                  text
+                  style={{ color: "#5F6B8A" }}
+                  onClick={() => handleDelete(timer)}
+                />
                 <Button
                   icon="pi pi-pencil"
                   rounded
-                text
-                style={{ color: "#5F6B8A" }}
-                  onClick={() => handleEdit(timer)} /></>
-              
+                  text
+                  style={{ color: "#5F6B8A" }}
+                  onClick={() => handleEdit(timer)}
+                />
+              </>
             )}
           ></Column>
         </DataTable>
       ) : (
         <p>No previous timers available.</p>
       )}
-       <Dialog
+      <Dialog
         visible={isEditModalOpen}
         onHide={() => setIsEditModalOpen(false)}
         className={styles.edit_modal}
       >
         <h2>Edit description</h2>
         <InputTextarea
-        autoResize
+          autoResize
           value={editedDescription}
           onChange={(e) => setEditedDescription(e.target.value)}
           rows={5}
